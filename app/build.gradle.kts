@@ -1,12 +1,14 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    id("com.google.devtools.ksp")
+    alias(libs.plugins.hilt)
 }
 
 android {
     namespace = "co.mirthandmalice.camerademo"
     compileSdk {
-        version = release(36) {
+        version = release(37) {
             minorApiLevel = 1
         }
     }
@@ -40,7 +42,16 @@ android {
 dependencies {
     implementation(platform(libs.androidx.compose.bom))
 
-    implementation(libs.camerax)
+    //camera library
+    implementation(libs.camerax.core)
+    implementation(libs.camerax.camera2)
+    implementation(libs.camerax.compose)
+    implementation(libs.camerax.lifecycle)
+    implementation(libs.camerax.ext)
+    //end
+
+    implementation(libs.dagger)
+    ksp(libs.dagger.compiler)
 
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material3)
@@ -49,6 +60,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.vm)
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)

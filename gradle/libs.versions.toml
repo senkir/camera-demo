@@ -14,8 +14,16 @@ ksp = "2.3.4"
 
 hilt = "1.4.0"
 dagger = "2.60.1"
+imageLabeling = "17.0.9"
+visionCommon = "17.3.0"
 
 [libraries]
+
+#ml-kit
+ml-labeling = { group = "com.google.mlkit", name="image-labeling", version.ref="imageLabeling"}
+ml-visioncommon = { group = "com.google.mlkit", name = "vision-common", version.ref = "visionCommon" }
+
+
 # camera
 camerax-core = { group = "androidx.camera", name="camera-core", version.ref = "camerax" }
 camerax-camera2 = { group = "androidx.camera", name="camera-camera2", version.ref = "camerax" }
@@ -31,6 +39,7 @@ androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = 
 androidx-lifecycle-vm = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "lifecycleRuntimeKtx"}
 androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
+androidx-hilt-viewmodelcompose = { group = "androidx.hilt", name = "hilt-lifecycle-viewmodel-compose", version.ref="hilt"}
 
 #compose
 androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }

@@ -42,6 +42,11 @@ android {
 dependencies {
     implementation(platform(libs.androidx.compose.bom))
 
+    //ml libs
+    implementation(libs.ml.labeling)
+    implementation(libs.ml.visioncommon)
+
+
     //camera library
     implementation(libs.camerax.core)
     implementation(libs.camerax.camera2)
@@ -52,6 +57,7 @@ dependencies {
 
     implementation(libs.dagger)
     ksp(libs.dagger.compiler)
+    implementation(libs.androidx.hilt.viewmodelcompose)
 
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material3)

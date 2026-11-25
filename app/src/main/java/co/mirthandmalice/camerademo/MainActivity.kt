@@ -9,12 +9,22 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.compose.CameraXViewfinder
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
+import androidx.compose.material3.AssistChipDefaults.assistChipColors
 import androidx.compose.material3.Button
+import androidx.compose.material3.ChipColors
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
@@ -28,13 +38,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import co.mirthandmalice.camerademo.ui.theme.CameraDemoTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -99,10 +110,12 @@ fun PermissionRationale(onRequest: () -> Unit) {
 @Composable
 fun CameraPreview(
     modifier: Modifier = Modifier,
-    vm: CameraViewModel = viewModel(),
+    vm: CameraViewModel = hiltViewModel(),
 ) {
 
     val errorEvent = vm.errorEvent.collectAsState()
+
+    val ui = vm.uiState.collectAsState()
 
     Column(modifier = modifier) {
         Text("Camera Preview")
@@ -129,12 +142,24 @@ fun CameraPreview(
                     CameraXViewfinder(surfaceRequest = it)
                 }
 
+                ImageProcessedResults(
+                    onClear = {
+                        vm.clearRecords()
+                    },
+                    newImage = ui.value.newImageProcessing,
+                    labels = ui.value.labels
+                )
+
                 CameraWindowChrome(
+                    hasOneCamera = ui.value.hasOneCamera,
                     onTakePicture = {
                         vm.takePicture(current)
                     },
                     onFlipCamera = {
                         vm.onFlipCamera()
+                    },
+                    onTorchToggled = {
+                        vm.onToggleTorch()
                     }
                 )
 
@@ -146,9 +171,71 @@ fun CameraPreview(
 }
 
 @Composable
+fun BoxScope.ImageProcessedResults(
+    onClear: () -> Unit,
+    newImage: Long,
+    labels: List<CameraViewModel.LabelData>,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier
+            .align(Alignment.BottomCenter)
+            .padding(bottom = 200.dp)
+    ) {
+        Text("Image: $newImage")
+
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(4), modifier = Modifier
+                .fillMaxWidth(0.8f)
+                .heightIn(max = 600.dp)
+        ) {
+
+            item {
+
+                Button(onClear) {
+                    Text("Clear")
+                }
+            }
+
+            labels.forEach { label ->
+                item {
+
+                    ChipWithPriority(label)
+                }
+            }
+        }
+
+    }
+}
+
+
+
+@Composable
+fun ChipWithPriority(data: CameraViewModel.LabelData) {
+
+    val color = when(data.priorityInt) {
+        2 -> Color.Red
+        1 -> Color.Blue
+        else -> Color.Transparent
+    }
+
+    AssistChip(
+        onClick = {},
+        colors = assistChipColors(
+            containerColor = color
+        ),
+        label = {
+            Text(data.text)
+        },
+    )
+}
+
+@Composable
 fun BoxScope.CameraWindowChrome(
+    hasOneCamera: Boolean,
     onTakePicture: () -> Unit,
     onFlipCamera: () -> Unit,
+    onTorchToggled: () -> Unit
 ) {
 
     TakePictureButton(
@@ -157,16 +244,34 @@ fun BoxScope.CameraWindowChrome(
             .padding(20.dp)
     )
 
-    IconButton(
-        onFlipCamera,
-        modifier = Modifier
+    Row(
+        Modifier
             .padding(8.dp)
-        .align(Alignment.TopStart)
+            .align(Alignment.TopStart)
     ) {
-        Icon(
-            painterResource(R.drawable.ic_photo_flip),
-            contentDescription = "Flip Camera",
-        )
+
+        IconButton(
+            onFlipCamera,
+            enabled = !hasOneCamera,
+            modifier = Modifier
+                .padding(8.dp)
+        ) {
+            Icon(
+                painterResource(R.drawable.ic_photo_flip),
+                contentDescription = "Flip Camera",
+            )
+        }
+
+        IconButton(
+            onTorchToggled,
+            modifier = Modifier
+                .padding(8.dp)
+        ) {
+            Icon(
+                painterResource(R.drawable.ic_flash),
+                contentDescription = "Torch Toggle",
+            )
+        }
     }
 }
 

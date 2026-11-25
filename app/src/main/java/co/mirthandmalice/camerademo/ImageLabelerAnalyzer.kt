@@ -25,7 +25,7 @@ class ImageLabelerAnalyzer @Inject constructor(
 
     companion object {
         const val TAG = "ImageLabelerAnalyzer"
-        const val ANALYZER_DELAY_M = 1L
+        const val ANALYZER_DELAY_M = 500L
     }
 
     private val _imageStarting: MutableSharedFlow<Long> = MutableSharedFlow(replay = 0)
@@ -84,14 +84,14 @@ class ImageLabelerAnalyzer @Inject constructor(
             //just trigger a new event happening
             _imageStarting.emit(Clock.System.now().epochSeconds)
         }
-        lastEvent = Clock.System.now().epochSeconds
+        lastEvent = Clock.System.now().toEpochMilliseconds()
     }
 
     private var lastEvent = 0L
 
     @kotlin.OptIn(ExperimentalTime::class)
     private fun skipIfThrottled(): Boolean {
-        val now = Clock.System.now().epochSeconds
+        val now = Clock.System.now().toEpochMilliseconds()
         return now - lastEvent < ANALYZER_DELAY_M
     }
 
@@ -100,13 +100,13 @@ class ImageLabelerAnalyzer @Inject constructor(
 
         val media = imageProxy.image
         if (media != null) {
-            val inputImage = InputImage.fromMediaImage(media, imageProxy.imageInfo.rotationDegrees)
 
             if (skipIfThrottled()) {
                 imageProxy.close()
                 return
             }
             notifyImageStarting()
+            val inputImage = InputImage.fromMediaImage(media, imageProxy.imageInfo.rotationDegrees)
 
             //pass image to MLkit vision api
             client.process(inputImage)

@@ -41,7 +41,6 @@ class CameraViewModel @Inject constructor(
 
     companion object {
         const val TAG = "CameraViewModel"
-        const val MAX_RESULT = 20
     }
 
     data class CameraUI(
@@ -63,7 +62,7 @@ class CameraViewModel @Inject constructor(
 
     private val analysis: Executor = Executors.newSingleThreadExecutor()
 
-    private val processedLabels = mutableListOf<LabelData>()
+    private var processedLabels = listOf<LabelData>()
 
     private var camera: Camera? = null
 
@@ -125,7 +124,7 @@ class CameraViewModel @Inject constructor(
     }
 
     fun onNewImage(newTime: Long) {
-        clearRecords()
+//        clearRecords()
         _ui.update {
             it.copy(newImageProcessing = newTime)
         }
@@ -139,31 +138,33 @@ class CameraViewModel @Inject constructor(
             _ui.update { it.copy(hasOneCamera = true) }
         }
 
-        try {
-            lensFacing.collectLatest { facing ->
+            try {
+        lensFacing.collectLatest { facing ->
                 val selector = CameraSelector.Builder()
                     .requireLensFacing(facing)
                     .build()
                 if (!provider.hasCamera(selector)) {
                     return@collectLatest
                 }
-                camera = provider.bindToLifecycle(
-                    owner,
-                    selector,
-                    previewUseCase, imageCaptureUseCase, imageAnalysisUseCase
-                )
-            }
-        } catch (e: Exception) {
-            camera = null
-            if (e is IllegalStateException) {
-                _error.value = CameraError.BindFailure
-            } else {
-                _error.value = CameraError.Unknown
-            }
-            if (e is CancellationException) {
-                throw e
-            }
+                stopProcessing()
+                provider.unbindAll()
+                try {
+                    camera = provider.bindToLifecycle(
+                        owner,
+                        selector,
+                        previewUseCase, imageCaptureUseCase, imageAnalysisUseCase
+                    )
+                    startProcessing()
+                } catch (e: IllegalStateException) {
+                    _error.value = CameraError.BindFailure
+                } catch (e: IllegalArgumentException) {
+                    _error.value = CameraError.BindFailure
+                }
         }
+            } finally {
+//                stopProcessing()
+//                provider.unbindAll()
+            }
         _ui.update { ui ->
             ui.copy(
                 cameraReady = true,
@@ -248,25 +249,18 @@ class CameraViewModel @Inject constructor(
 
     private fun updateLabels(produced: List<ProcessedLabels>) {
         Log.d(TAG, "updateLabels: $produced")
-        //TODO: confidence logged maybe
         val out = produced.map {
             LabelData(
                 text = it.text,
                 priorityInt = it.priority.ordinal
             )
         }
-        processedLabels.clear()
-        processedLabels.addAll(out)
+        processedLabels = out
         _ui.update { ui ->
             ui.copy(
                 labels = processedLabels,
                 changeIndex = ui.changeIndex + 1,
-                newestLabel = produced.first().text
             )
-        }
-        if (processedLabels.size >= MAX_RESULT) {
-            Log.w(TAG, "max produced labels met. list=$processedLabels")
-            stopProcessing()
         }
     }
 
@@ -274,7 +268,7 @@ class CameraViewModel @Inject constructor(
         if (processedLabels.isEmpty()) {
             return;
         }
-        processedLabels.clear()
+        processedLabels = emptyList()
         _ui.update { ui ->
             ui.copy(
                 labels = processedLabels,

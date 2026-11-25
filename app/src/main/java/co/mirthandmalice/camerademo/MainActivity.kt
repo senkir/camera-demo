@@ -20,6 +20,8 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.AssistChipDefaults.assistChipColors
@@ -146,6 +148,7 @@ fun CameraPreview(
                     onClear = {
                         vm.clearRecords()
                     },
+                    changeIndex = ui.value.changeIndex,
                     newImage = ui.value.newImageProcessing,
                     labels = ui.value.labels
                 )
@@ -174,6 +177,7 @@ fun CameraPreview(
 fun BoxScope.ImageProcessedResults(
     onClear: () -> Unit,
     newImage: Long,
+    changeIndex: Long,
     labels: List<CameraViewModel.LabelData>,
     modifier: Modifier = Modifier
 ) {
@@ -185,23 +189,13 @@ fun BoxScope.ImageProcessedResults(
         Text("Image: $newImage")
 
         LazyVerticalGrid(
-            columns = GridCells.Fixed(4), modifier = Modifier
+            columns = GridCells.Fixed(2), modifier = Modifier
                 .fillMaxWidth(0.8f)
-                .heightIn(max = 600.dp)
+                .heightIn(max = 800.dp)
         ) {
 
-            item {
-
-                Button(onClear) {
-                    Text("Clear")
-                }
-            }
-
-            labels.forEach { label ->
-                item {
-
-                    ChipWithPriority(label)
-                }
+            items(items = labels, key = { it.text}) { label ->
+                ChipWithPriority(label)
             }
         }
 
@@ -214,9 +208,9 @@ fun BoxScope.ImageProcessedResults(
 fun ChipWithPriority(data: CameraViewModel.LabelData) {
 
     val color = when(data.priorityInt) {
-        2 -> Color.Red
-        1 -> Color.Blue
-        else -> Color.Transparent
+        2 -> Color(0.3f,0.3f,0.5f, 1.0f)
+        1 -> Color(0.3f,0.3f,0.4f, 1.0f)
+        else -> Color(0.3f,0.3f,031f, 1.0f)
     }
 
     AssistChip(
